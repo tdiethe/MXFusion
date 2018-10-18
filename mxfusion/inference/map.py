@@ -40,7 +40,7 @@ class MAP(InferenceAlgorithm):
         """
         q = Posterior(model)
         for v in model.get_latent_variables(observed):
-            q[v].assign_factor(PointMass(location=Variable(shape=v.shape)))
+            q[v].assign_factor(PointMass(location=Variable(shape=v.shape), dtype=v.factor.dtype))
         return q
 
     def compute(self, F, variables):
