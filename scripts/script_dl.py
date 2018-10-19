@@ -64,7 +64,7 @@ one = mx.nd.array([1])
 noise_variance = mx.nd.array([0.1])
 
 # m.Z = Normal.define_variable(mean=zero, variance=one, shape=(m_train, k))
-m.Z = NormalMeanPrecision.define_variable(mean=zero, variance=one, shape=(m_train, k))
+m.Z = NormalMeanPrecision.define_variable(mean=zero, precision=one, shape=(m_train, k))
 m.D = Normal.define_variable(mean=zero, variance=one, shape=(k, n))
 m.X = Normal.define_variable(
     mean=dot(m.Z, m.D, shape=(m_train, n)),
