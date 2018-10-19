@@ -202,12 +202,15 @@ class Module(Factor):
         :param algorithm: the inference algorithm to draw samples of the chosen target variables from the module.
         :type algorithm: InferenceAlgorithm
         """
+        from ..inference.inference_alg import InferenceAlgorithm
         if targets is not None:
             targets = tuple(sorted(targets))
         if conditionals is not None:
             conditionals = tuple(sorted(conditionals))
         if alg_name is not None:
             if not hasattr(self, alg_name):
+                setattr(self, alg_name, algorithm)
+            elif isinstance(getattr(self, alg_name), InferenceAlgorithm):
                 setattr(self, alg_name, algorithm)
             else:
                 warnings.warn('The algorithm name '+str(alg_name)+' has already existed in the module '+str(self)+'. Skip the attribute setting.')
@@ -217,7 +220,7 @@ class Module(Factor):
             no_match = True
             for i, m in enumerate(methods):
                 if targets == m[0]:
-                    if m[2] is not None:
+                    if m[2] is not None and m[2] != alg_name:
                         delattr(self, m[2])
                     methods[i] = (targets, algorithm, alg_name)
                     no_match = False
@@ -240,12 +243,15 @@ class Module(Factor):
         :param algorithm: the inference algorithm to predict the chosen target variables from the module.
         :type algorithm: InferenceAlgorithm
         """
+        from ..inference.inference_alg import InferenceAlgorithm
         if targets is not None:
             targets = tuple(sorted(targets))
         if conditionals is not None:
             conditionals = tuple(sorted(conditionals))
         if alg_name is not None:
             if not hasattr(self, alg_name):
+                setattr(self, alg_name, algorithm)
+            elif isinstance(getattr(self, alg_name), InferenceAlgorithm):
                 setattr(self, alg_name, algorithm)
             else:
                 warnings.warn('The algorithm name '+str(alg_name)+' has already existed in the module '+str(self)+'. Skip the attribute setting.')
@@ -255,7 +261,7 @@ class Module(Factor):
             no_match = True
             for i, m in enumerate(methods):
                 if targets == m[0]:
-                    if m[2] is not None:
+                    if m[2] is not None and m[2] != alg_name:
                         delattr(self, m[2])
                     methods[i] = (targets, algorithm, alg_name)
                     no_match = False
