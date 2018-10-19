@@ -81,6 +81,7 @@ inf = GradBasedInference(inference_algorithm=vi, grad_loop=BatchInferenceLoop())
 
 inf.params[m.D] = mx.nd.random.normal(loc=0, scale=100, shape=m.D.shape)
 inf.params[m.Z] = mx.nd.random.normal(loc=0, scale=100, shape=m.Z.shape)
+inf.initialize(X=mx.nd.array(df1_train.values))
 
 inf.run(X=mx.nd.array(df1_train.values), max_iter=1000, verbose=True)
 
