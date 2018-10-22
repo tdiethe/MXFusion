@@ -2,6 +2,8 @@ import unittest
 import numpy as np
 import mxnet as mx
 import mxnet.gluon.nn as nn
+import pytest
+
 import mxfusion as mf
 from mxfusion.inference.forward_sampling import VariationalPosteriorForwardSampling
 from mxfusion.components.functions import MXFusionGluonFunction
@@ -59,3 +61,31 @@ class InferenceTests(unittest.TestCase):
 
         infr2 = VariationalPosteriorForwardSampling(10, [m.x], infr, [m.r])
         infr2.run(x=x_nd)
+
+    def test_two_coins(self):
+        from mxfusion import Model, Posterior
+        from mxfusion.components.distributions import Bernoulli
+        from mxfusion.inference import ForwardSampling, BatchInferenceLoop, GradBasedInference
+        from mxfusion.components.variables import Variable, VariableType
+
+        dtype = np.float32
+
+        m = Model()
+        prob_true = mx.nd.array([0.5], dtype=dtype)
+        m.coin1 = Bernoulli.define_variable(prob_true, shape=(1,), rand_gen=None, dtype=dtype)
+        m.coin2 = Bernoulli.define_variable(prob_true, shape=(1,), rand_gen=None, dtype=dtype)
+
+        from mxfusion.components.functions.operator_impl import multiply
+
+        m.both_heads = multiply(m.coin1, m.coin2)
+
+        q = Posterior(m)
+        for v in m.variables.values():
+            if v.type == VariableType.RANDVAR:
+                q[v].set_prior(Bernoulli(prob_true=Variable(shape=v.shape), dtype=dtype))
+
+        # # Forwards inference
+        alg = ForwardSampling(model=m, observed=[], num_samples=1, infr_params=[], target_variables=[m.both_heads],
+                              var_tie=None)
+        inf = GradBasedInference(inference_algorithm=alg, grad_loop=BatchInferenceLoop(), dtype=dtype)
+        inf.run(max_iter=10)

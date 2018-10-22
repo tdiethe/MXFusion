@@ -16,7 +16,7 @@ from mxfusion.util.testutils import MockMXNetRandomGenerator
     ])
 def test_two_coins(self, dtype):
     from mxfusion.inference.map import MAP
-    from mxfusion.inference import StochasticVariationalInference
+    from mxfusion.inference import StochasticVariationalInference, ForwardSampling
     from mxfusion.inference.grad_based_inference import GradBasedInference
     from mxfusion.inference import BatchInferenceLoop
     from mxfusion.models import Model, Posterior
@@ -35,9 +35,9 @@ def test_two_coins(self, dtype):
             q[v].set_prior(Bernoulli(prob_true=Variable(shape=v.shape), dtype=dtype))
 
     # # Forwards inference
-    # alg = StochasticVariationalInference(model=m, observed=[], posterior=q, num_samples=1)
-    # inf = GradBasedInference(inference_algorithm=alg, grad_loop=BatchInferenceLoop(), dtype=dtype)
-    # inf.run(max_iter=10)
+    alg = ForwardSampling(model=m, observed=[], num_samples=1, infr_params=[], target_variables=[m.both_heads], var_tie=None)
+    inf = GradBasedInference(inference_algorithm=alg, grad_loop=BatchInferenceLoop(), dtype=dtype)
+    inf.run(max_iter=10)
 
     # Look at value of both_heads variable
 
