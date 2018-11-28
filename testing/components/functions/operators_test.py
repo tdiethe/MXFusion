@@ -139,3 +139,45 @@ class TestOperators(object):
         with pytest.raises(ModelSpecificationError, message="Operator should fail if not passed the correct arguments.") as excinfo:
             mxf_result = mxf_operator()
         assert excinfo.value is not None
+
+    def test_dot_product(self):
+        from mxfusion import Model, Variable
+        from mxfusion.components.distributions import Normal
+        from mxfusion.components.variables import PositiveTransformation
+        from mxfusion.components.functions import MXFusionGluonFunction
+        from mxfusion.inference import StochasticVariationalInference
+        from mxfusion.inference.grad_based_inference import GradBasedInference
+        from mxfusion.inference import BatchInferenceLoop
+        from mxfusion.inference.meanfield import create_Gaussian_meanfield
+
+        k = 5
+        [m, n] = 20, 10
+
+        X = mx.nd.array(np.random.normal(size=(m, n)))
+
+        model = Model()
+
+        operator_dot = True
+
+        if operator_dot:
+            from mxfusion.components.functions.operators import dot
+        else:
+            from mxnet.gluon import nn
+            dot = nn.HybridLambda(function='dot')
+            model.dot = MXFusionGluonFunction(dot, num_outputs=1, broadcastable=False)
+            dot = model.dot
+
+        #  MXFusion model
+        model.Z = Normal.define_variable(mean=0, variance=1, shape=(m, k))
+        model.D = Normal.define_variable(mean=0, variance=1, shape=(k, n))
+        sigma_2 = Variable(shape=(1,), transformation=PositiveTransformation())
+        model.X = Normal.define_variable(mean=dot(model.Z, model.D), variance=sigma_2, shape=(m, n))
+
+        observed = [model.X]
+        q = create_Gaussian_meanfield(model=model, observed=observed)
+
+        print(model.X.shape)
+
+        svi = StochasticVariationalInference(model=model, num_samples=100, observed=observed, posterior=q)
+        infr = GradBasedInference(inference_algorithm=svi, grad_loop=BatchInferenceLoop())
+        infr.run(X=X, max_iter=10)
