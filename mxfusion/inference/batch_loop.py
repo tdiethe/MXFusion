@@ -14,6 +14,7 @@
 
 import mxnet as mx
 from .grad_loop import GradLoop
+import numpy as np
 
 
 class BatchInferenceLoop(GradLoop):
@@ -52,6 +53,8 @@ class BatchInferenceLoop(GradLoop):
             with mx.autograd.record():
                 loss, loss_for_gradient = infr_executor(mx.nd.zeros(1, ctx=ctx), *data)
                 loss_for_gradient.backward()
+                if np.isnan(loss.asscalar()):
+                    raise ValueError("nan value in loss")
 
             if verbose:
                 print('\rIteration {} loss: {}\t\t\t\t'.format(i + 1, loss.asscalar()), end='')

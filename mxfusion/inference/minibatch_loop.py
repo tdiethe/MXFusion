@@ -16,6 +16,7 @@
 import mxnet as mx
 from mxnet.gluon.data import ArrayDataset
 from .grad_loop import GradLoop
+import numpy as np
 
 
 class MinibatchInferenceLoop(GradLoop):
@@ -83,6 +84,8 @@ class MinibatchInferenceLoop(GradLoop):
                 with mx.autograd.record():
                     loss, loss_for_gradient = infr_executor(mx.nd.zeros(1, ctx=ctx), *data_batch)
                     loss_for_gradient.backward()
+                    if np.isnan(loss.asscalar()):
+                        raise ValueError("nan value in loss")
                 if verbose:
                     print('\repoch {} Iteration {} loss: {}\t\t\t'.format(
                           e + 1, i + 1, loss.asscalar()),
